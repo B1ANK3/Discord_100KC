@@ -1,6 +1,5 @@
 import { AxiosResponse } from "axios";
 import { Client, Message } from "discord.js";
-// import waifu2x from 'waifu2x'
 
 interface config {
     token: string
@@ -9,14 +8,12 @@ interface config {
 
 const dc = require('discord.js')
 const tess = require('tesseract.js')
-// const rias = require('waifu2x')
 const fs = require('fs')
 const sharp = require('sharp')
 const axios = require('axios')
 
-// const OUTDIR = './parsed/'
 const IMAGEDIR = './training/'
-const config = require('./config.json')
+import * as config from './config.json';
 
 function makeid(length: number) {
     var result = '';
@@ -27,7 +24,6 @@ function makeid(length: number) {
     }
     return result;
 }
-
 
 class DiscordTrack {
     private message: Message
