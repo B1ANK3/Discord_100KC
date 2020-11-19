@@ -6,7 +6,7 @@ Discord Bot for tracking aimbotz 100 kill challenge. [Aimbotz CSGO Map](https://
 
 ## How to use ##
 
-Add the bot to your server via the invite [link](#). Members of a server can upload a screenshot of their times to a channel.
+Add the bot to your server via the invite [link](https://discord.com/api/oauth2/authorize?client_id=777921727555698729&permissions=256064&scope=bot). Members of a server can upload a screenshot of their times to a channel.
 eg: ![Example Upload Image](https://github.com/B1ANK3/discord_100kc/blob/master/examples/example.jpg)
 The bot will automatically detect the time with OCR (Optical Character Recognition) and create a leaderboard for the whole server
 
