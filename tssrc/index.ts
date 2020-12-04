@@ -13,6 +13,7 @@ const IMAGEDIR = './training/'
 var CLIENT: Discord;
 var BOARD_G: LeaderBoard;
 var DEBUG_G: boolean = false
+var RECORD_G: boolean = false
 var debug = function (message: any) {
     if (DEBUG_G) console.log(message)
 }
@@ -179,7 +180,6 @@ class DiscordTrack {
         }
     }
 }
-
 class Discord {
     bot: Client
     public track: DiscordTrack | null
@@ -258,6 +258,7 @@ class Discord {
         })
     }
     async record(url: string, image: ArrayBuffer, message: Message) {
+        if (!RECORD_G) return
         // Maybe port to google drive ?
         var id = makeid(15) // make folder id
         var self = this // inside callbacks
@@ -371,6 +372,9 @@ class Tesseract {
         if (typeof minimist == "object") {
             if (minimist.hasOwnProperty(p = 'debug')) {
                 DEBUG_G = minimist[p]
+            }
+            if (minimist.hasOwnProperty(p = 'record')) {
+                RECORD_G = minimist[p]
             }
         }
     }
