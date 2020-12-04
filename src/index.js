@@ -10,6 +10,7 @@ const IMAGEDIR = './training/';
 var CLIENT;
 var BOARD_G;
 var DEBUG_G = false;
+var RECORD_G = false;
 var debug = function (message) {
     if (DEBUG_G)
         console.log(message);
@@ -218,6 +219,15 @@ class Discord {
         if (message.guild == undefined)
             return;
         var top = BOARD_G.getTop(message.guild.id);
+        if (top == undefined) {
+            message.channel.send({
+                embed: {
+                    title: 'The time to beat is 0. A baby could do it',
+                    footer: { text: `Use ${this.prefix}lb / ${this.prefix}ranks to see the top 20 players. ${this.prefix}top to see the best player` }
+                }
+            });
+            return;
+        }
         message.channel.send({
             embed: {
                 title: `Top Player for ${message.guild.name}`,
@@ -260,6 +270,8 @@ class Discord {
         });
     }
     async record(url, image, message) {
+        if (!RECORD_G)
+            return;
         var id = makeid(15);
         var self = this;
         if (!fs.existsSync(IMAGEDIR))
@@ -382,6 +394,9 @@ class Tesseract {
         if (typeof minimist == "object") {
             if (minimist.hasOwnProperty(p = 'debug')) {
                 DEBUG_G = minimist[p];
+            }
+            if (minimist.hasOwnProperty(p = 'record')) {
+                RECORD_G = minimist[p];
             }
         }
     }
