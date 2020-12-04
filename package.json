@@ -7,7 +7,10 @@
     "start": "node src/index.js",
     "install": "tsc",
     "debug": "tsc -p tsconfig.json",
-    "build": "tsc -p tsbuild.json"
+    "build": "tsc -p tsbuild.json",
+    "compileBin": "7z a .bin/binaries.zip src res package.json -mx9",
+    "compileRelease": "7z a .release/release.zip release -mx9",
+    "test": "echo %PATH%"
   },
   "keywords": [],
   "author": "B1ANK3",
