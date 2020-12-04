@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "install": "tsc",
+    "checkInstall": "npm i .",
     "debug": "tsc -p tsconfig.json",
     "build": "tsc -p tsbuild.json",
     "compileBin": "7z a .bin/binaries.zip src res package.json -mx9",
