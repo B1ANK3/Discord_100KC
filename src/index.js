@@ -336,10 +336,10 @@ class Discord {
                             resolve({ out: `No Time Value Found`, success: false, soft: true });
                         }
                     });
-                })
-                    .catch((err) => {
-                    reject({ out: err, success: false, soft: false });
                 });
+            })
+                .catch((err) => {
+                reject({ out: err, success: false, soft: false });
             });
         });
     }
