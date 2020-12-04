@@ -329,9 +329,9 @@ class Discord {
                                 }
                             })
                         })
-                        .catch((err: Error) => {
-                            reject({ out: err, success: false, soft: false })
-                        })
+                })
+                .catch((err: Error) => {
+                    reject({ out: err, success: false, soft: false })
                 })
         })
     }
