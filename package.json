@@ -10,7 +10,7 @@
     "build": "tsc -p tsbuild.json",
     "compileBin": "7z a .bin/binaries.zip src res package.json -mx9",
     "compileRelease": "7z a .release/release.zip release -mx9",
-    "test": "echo %PATH%"
+    "compileAll": "npm run compileBin && npm run compileRelease"
   },
   "keywords": [],
   "author": "B1ANK3",
