@@ -5,7 +5,9 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "install": "tsc"
+    "install": "tsc",
+    "debug": "tsc -p tsconfig.json",
+    "build": "tsc -p tsbuild.json"
   },
   "keywords": [],
   "author": "B1ANK3",
@@ -13,6 +15,7 @@
   "dependencies": {
     "axios": "^0.21.0",
     "discord.js": "^12.4.1",
+    "minimist": "^1.2.5",
     "sharp": "^0.26.3",
     "tesseract.js": "^2.1.4"
   },

@@ -1,31 +1,19 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const dc = require('discord.js');
 const tess = require('tesseract.js');
 const fs = require('fs');
 const sharp = require('sharp');
 const axios = require('axios');
+const minimist = require('minimist')(process.argv.slice(2));
 const IMAGEDIR = './training/';
-const config = __importStar(require("./config.json"));
+var CLIENT;
+var BOARD_G;
+var DEBUG_G = false;
+var debug = function (message) {
+    if (DEBUG_G)
+        console.log(message);
+};
 function makeid(length) {
     var result = '';
     var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -34,6 +22,115 @@ function makeid(length) {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
+}
+class DBclone {
+    constructor(filePath) {
+        if (!fs.existsSync(filePath))
+            throw new Error(`File: ${filePath} does not exist..`);
+        this.cache = JSON.parse(fs.readFileSync(filePath));
+        this.path = filePath;
+    }
+    updateCache() {
+        var self = this;
+        fs.readFile(this.path, (err, data) => {
+            if (err)
+                throw new Error('File has been moved or no longer exists: ' + err.message);
+            self.cache = JSON.parse(data);
+        });
+    }
+    setCache() {
+        fs.writeFileSync(this.path, JSON.stringify(this.cache, null, 2), 'utf8');
+        this.updateCache();
+    }
+    value(valPath) {
+        var p, path, o;
+        if (valPath.includes(p = '.') || valPath.includes(p = '/')) {
+            path = valPath.split(p);
+            o = this.cache[path.shift() || 0];
+            while (path.length > 0) {
+                if (o == undefined)
+                    return undefined;
+                o = o[path.shift() || 0];
+            }
+            return o;
+        }
+        if (this.cache[valPath] !== undefined) {
+            return this.cache[valPath];
+        }
+        return undefined;
+    }
+    get cached() {
+        return this.cache;
+    }
+    set cached(obj) {
+        this.cache = obj;
+    }
+}
+function DB(filePath) {
+    return new DBclone(filePath);
+}
+class LeaderBoard {
+    constructor() {
+        this.file = DB('./res/leaderboard.json');
+    }
+    addPlayer(message, time) {
+        var _a;
+        if (message.guild == undefined)
+            return;
+        var g = this.file.cached.leaderboard.guild;
+        if (!g.hasOwnProperty((_a = message.guild) === null || _a === void 0 ? void 0 : _a.id)) {
+            g[message.guild.id] = {
+                name: message.guild.name,
+                high: { name: message.author.username, seconds: this.parseTime(time), score: time, position: 1 },
+                board: [
+                    { name: message.author.username, seconds: this.parseTime(time), score: time, position: 1 }
+                ]
+            };
+        }
+        else {
+            var t = this.file.cached.leaderboard.guild[message.guild.id];
+            t.board.push({
+                name: message.author.username,
+                seconds: this.parseTime(time),
+                score: time,
+                position: t.board.length + 1
+            });
+            this.reposition(message.guild.id);
+            t.high = t.board[0];
+        }
+        this.file.setCache();
+    }
+    getBoard(guild) {
+        var _a;
+        if (this.file.cached.leaderboard.guild[guild] == undefined)
+            return undefined;
+        var res = [];
+        res = (_a = this.file.cached.leaderboard.guild[guild]) === null || _a === void 0 ? void 0 : _a.board.map((p, _i) => {
+            return { field: { name: p.name, value: `Score: ${p.score} | Position: ${p.position}` }, score: p.seconds };
+        });
+        res.sort((a, b) => a.score - b.score);
+        return res.map((v, _j) => {
+            return v.field;
+        });
+    }
+    getTop(guild) {
+        var _a;
+        if (this.file.cached.leaderboard.guild[guild] == undefined)
+            return undefined;
+        return (_a = this.file.cached.leaderboard.guild[guild]) === null || _a === void 0 ? void 0 : _a.high;
+    }
+    parseTime(time) {
+        var f = 0;
+        f += parseFloat(time.slice(0, time.indexOf(':'))) * 60;
+        f += parseFloat(time.slice(time.indexOf(':') + 1, time.indexOf('.')));
+        f += parseFloat(time.slice(time.indexOf('.') + 1, time.length)) / 1000;
+        return f;
+    }
+    reposition(guild) {
+        var b = this.file.cached.leaderboard.guild[guild].board;
+        b.sort((c, d) => c.seconds - d.seconds);
+        b.forEach((f, k) => { f.position = k + 1; });
+    }
 }
 class DiscordTrack {
     constructor(message) {
@@ -44,8 +141,13 @@ class DiscordTrack {
     async send() {
         this.embedMessage = await this.message.channel.send({ embed: this.embed('initial') });
     }
-    update(state, args) {
+    update(state, success, args) {
         this.embedMessage.edit({ embed: this.embed(state, args) });
+        if (state == 'finished' && success) {
+            if (args == undefined)
+                return;
+            BOARD_G.addPlayer(this.message, args);
+        }
     }
     embed(stage = 'initial', args = '') {
         switch (stage) {
@@ -79,24 +181,74 @@ class DiscordTrack {
 }
 class Discord {
     constructor() {
+        var bot_config = DB('./res/bot_config.json');
         this.bot = new dc.Client();
         this.bot.once('ready', () => { console.log(`Ready for orders..`); });
         this.bot.on('message', (mes) => this.message(mes));
-        this.bot.login(config.token);
+        this.bot.login(bot_config.value('token'));
+        this.prefix = bot_config.value('prefix');
         this.track = null;
     }
     message(message) {
         var self = this;
         if (message.author.bot)
             return;
+        if (message.content != '') {
+            this.command(message);
+        }
         if (message.attachments) {
-            message.attachments.forEach((l, r) => {
+            message.attachments.forEach((l, _r) => {
                 if (l.url.indexOf('.png') || l.url.indexOf('jpg') || l.url.indexOf('jpeg')) {
                     this.track = new DiscordTrack(message);
                     self.getImage(l.url).then((blob) => self.record(l.url, blob, message));
                 }
             });
         }
+    }
+    async command(mess) {
+        if (mess.content.startsWith(`${this.prefix}lb`)
+            || mess.content.startsWith(`${this.prefix}ranks`)) {
+            this.leaderboardShow(mess);
+        }
+        else if (mess.content.startsWith(`${this.prefix}top`)) {
+            this.topShow(mess);
+        }
+    }
+    async topShow(message) {
+        if (message.guild == undefined)
+            return;
+        var top = BOARD_G.getTop(message.guild.id);
+        message.channel.send({
+            embed: {
+                title: `Top Player for ${message.guild.name}`,
+                description: `Player to beat: `,
+                fields: [
+                    { name: top.name, value: `Score: ${top.score} | Position: ${top.position} | KPM: ${Math.round((100 / top.seconds) * 100) / 100}` }
+                ],
+                footer: { text: `Use ${this.prefix}lb / ${this.prefix}ranks to see the top 20 players. ${this.prefix}top to see the best player` }
+            }
+        });
+    }
+    async leaderboardShow(mess) {
+        if (mess.guild == undefined)
+            return;
+        let fields = BOARD_G.getBoard(mess.guild.id);
+        if (fields == undefined) {
+            mess.channel.send({
+                embed: {
+                    title: 'Nothing to show.. Really?',
+                    footer: { text: `Use ${this.prefix}lb / ${this.prefix}ranks to see the top 20 players. ${this.prefix}top to see the best player` }
+                }
+            });
+            return;
+        }
+        mess.channel.send({
+            embed: {
+                title: `Leaderboard for ${mess.guild.name}`,
+                fields: fields,
+                footer: { text: `Use ${this.prefix}lb / ${this.prefix}ranks to see the top 20 players. ${this.prefix}top to see the best player` }
+            }
+        });
     }
     getImage(url) {
         return new Promise(function (resolve) {
@@ -129,8 +281,8 @@ class Discord {
                 .then((data) => {
                 var _a, _b;
                 if (!data.success)
-                    (_a = self.track) === null || _a === void 0 ? void 0 : _a.update('error');
-                (_b = self.track) === null || _b === void 0 ? void 0 : _b.update('finished', data.out);
+                    (_a = self.track) === null || _a === void 0 ? void 0 : _a.update('error', false);
+                (_b = self.track) === null || _b === void 0 ? void 0 : _b.update('finished', true, data.out);
                 obj['success'] = data.success;
                 obj['out'] = data.out;
                 obj['soft'] = data.soft;
@@ -138,7 +290,7 @@ class Discord {
             })
                 .catch((data) => {
                 var _a;
-                (_a = self.track) === null || _a === void 0 ? void 0 : _a.update('error');
+                (_a = self.track) === null || _a === void 0 ? void 0 : _a.update('error', false);
                 obj['success'] = data.success;
                 obj['out'] = data.out;
                 obj['soft'] = data.soft;
@@ -170,10 +322,11 @@ class Discord {
                     .toFile(`${fileID}/outImage.png`, function (err, info) {
                     var _a;
                     if (err) {
-                        (_a = self.track) === null || _a === void 0 ? void 0 : _a.update('error');
+                        (_a = self.track) === null || _a === void 0 ? void 0 : _a.update('error', false);
+                        debug(err);
                         reject(err);
                     }
-                    console.log(info);
+                    debug(info);
                     t.imageText(`${fileID}/outImage.png`).then((str) => {
                         if (str.includes('Time:')) {
                             var n = str.slice(str.indexOf('Time:') + 5, str.indexOf('Time:') + 16).trim();
@@ -183,10 +336,10 @@ class Discord {
                             resolve({ out: `No Time Value Found`, success: false, soft: true });
                         }
                     });
+                })
+                    .catch((err) => {
+                    reject({ out: err, success: false, soft: false });
                 });
-            })
-                .catch((err) => {
-                reject({ out: err, success: false, soft: false });
             });
         });
     }
@@ -206,9 +359,9 @@ class Tesseract {
     }
     async track(work) {
         var _a;
-        console.log(`Worker %: ${Math.floor(work.progress * 10000) / 100}`);
+        debug(`Worker %: ${Math.floor(work.progress * 10000) / 100}`);
         if (work.status == 'recognizing text')
-            (_a = client.track) === null || _a === void 0 ? void 0 : _a.update('updated', `${Math.floor(work.progress * 10000) / 100}`);
+            (_a = CLIENT.track) === null || _a === void 0 ? void 0 : _a.update('updated', true, `${Math.floor(work.progress * 10000) / 100}`);
     }
     async imageText(url) {
         if (!this.worker)
@@ -219,8 +372,19 @@ class Tesseract {
     }
     async free() {
         if (this.worker)
-            await this.worker.terminate().then(() => { console.log('Terminated Worker'); }).catch((err) => console.log(err));
+            await this.worker.terminate().then(() => { debug('Terminated Worker'); }).catch((err) => debug(err));
         this.worker = null;
     }
 }
-const client = new Discord();
+(function () {
+    var p;
+    if (minimist != null) {
+        if (typeof minimist == "object") {
+            if (minimist.hasOwnProperty(p = 'debug')) {
+                DEBUG_G = minimist[p];
+            }
+        }
+    }
+    BOARD_G = new LeaderBoard();
+    CLIENT = new Discord();
+})();
