@@ -1,17 +1,39 @@
 {
   "compilerOptions": {
+    "removeComments": true,
+    "esModuleInterop": true,
+    "skipLibCheck": false,
+    "forceConsistentCasingInFileNames": true,
+    "watch": true,
+    "incremental": true,
     "target": "ES2019",
     "module": "commonjs",
-    "outDir": "src",
-    "rootDir": "tssrc",
-    "removeComments": true,
+    "allowJs": true,
+    "checkJs": true,
+    "outDir": "./src",
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
     "moduleResolution": "node",
     "typeRoots": [
       "./node_modules/@types"
-    ],
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": false,
-    "forceConsistentCasingInFileNames": true
-  }
+    ]
+  },
+  "include": [
+    "tssrc/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "extras",
+    "src"
+  ]
 }

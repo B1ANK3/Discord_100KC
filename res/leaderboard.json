@@ -1,0 +1,76 @@
+{
+  "leaderboard": {
+    "guild": {
+      "12345": {
+        "name": "Penguinzz",
+        "high": {
+          "score": "01:12:10",
+          "seconds": 72.1,
+          "name": "B1ANK3",
+          "position": 1
+        },
+        "board": [
+          {
+            "name": "Jedd",
+            "score": "01:12:10",
+            "seconds": 72.1,
+            "position": 2
+          },
+          {
+            "score": "01:12:10",
+            "seconds": 72.1,
+            "name": "B1ANK3",
+            "position": 1
+          }
+        ]
+      },
+      "582479771490058257": {
+        "name": "Wisp's Testing Facility",
+        "high": {
+          "name": "Wisp",
+          "seconds": 68.11,
+          "score": "01:08.110",
+          "position": 1
+        },
+        "board": [
+          {
+            "name": "Wisp",
+            "seconds": 68.11,
+            "score": "01:08.110",
+            "position": 1
+          },
+          {
+            "name": "Wisp",
+            "seconds": 68.719,
+            "score": "01:08.719",
+            "position": 2
+          },
+          {
+            "name": "Wisp",
+            "seconds": 70.672,
+            "score": "01:10.672",
+            "position": 3
+          },
+          {
+            "name": "Wisp",
+            "seconds": 70.672,
+            "score": "01:10.672",
+            "position": 4
+          },
+          {
+            "name": "Wisp",
+            "seconds": 72.235,
+            "score": "01:12.235",
+            "position": 5
+          },
+          {
+            "name": "Wisp",
+            "seconds": 81.313,
+            "score": "01:21.313",
+            "position": 6
+          }
+        ]
+      }
+    }
+  }
+}
