@@ -219,6 +219,14 @@ class Discord {
     async topShow(message: Message) {
         if (message.guild == undefined) return
         var top = BOARD_G.getTop(message.guild.id)
+        if (top == undefined) {
+            message.channel.send({
+                embed: {
+                    title: 'The time to beat is 0. A baby could do it',
+                    footer: { text: `Use ${this.prefix}lb / ${this.prefix}ranks to see the top 20 players. ${this.prefix}top to see the best player` }
+                }
+            }); return
+        }
         message.channel.send({
             embed: {
                 title: `Top Player for ${message.guild.name}`,
