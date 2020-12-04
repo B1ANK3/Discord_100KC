@@ -1,7 +1,8 @@
 {
-    "token": "Nzc3OTIxNzI3NTU1Njk4NzI5.X7KeEA.WSPVYLWtiUFQr3yrj8LvBiKNU58",
+    "token": "your discord token here",
     "prefix": "_",
     "channels": {
+        "comment": "currently working on this",
         "guild": {
             "12": [
                 "1234id"
