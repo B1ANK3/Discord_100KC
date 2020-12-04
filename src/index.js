@@ -270,8 +270,6 @@ class Discord {
         });
     }
     async record(url, image, message) {
-        if (!RECORD_G)
-            return;
         var id = makeid(15);
         var self = this;
         if (!fs.existsSync(IMAGEDIR))

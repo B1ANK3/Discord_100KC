@@ -266,7 +266,7 @@ class Discord {
         })
     }
     async record(url: string, image: ArrayBuffer, message: Message) {
-        if (!RECORD_G) return
+        // if (!RECORD_G) return
         // Maybe port to google drive ?
         var id = makeid(15) // make folder id
         var self = this // inside callbacks
