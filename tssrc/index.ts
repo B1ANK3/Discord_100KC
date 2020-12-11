@@ -34,7 +34,6 @@ function makeid(length: number) {
     }
     return result;
 }
-
 class DBclone {
     public cache: any
     private path: string

@@ -5,10 +5,9 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "checkInstall": "npm i .",
     "debug": "tsc -p tsconfig.json",
     "build": "tsc -p tsbuild.json",
-    "compileBin": "7z a .bin/binaries.zip src res package.json -mx9",
+    "compileBin": "7z a .bin/binaries.zip src/index.js res package.json -mx9",
     "compileRelease": "7z a .release/release.zip release -mx9",
     "compileAll": "npm run compileBin && npm run compileRelease",
     "update": "cd release && npm run update"
