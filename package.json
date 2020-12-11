@@ -1,7 +1,7 @@
 {
   "name": "discord_100kc",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.0.1",
+  "description": "Discord 100 Kill Challenge tracking bot. Users upload images of their times and get placed on a leaderboard",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
@@ -10,9 +10,22 @@
     "build": "tsc -p tsbuild.json",
     "compileBin": "7z a .bin/binaries.zip src res package.json -mx9",
     "compileRelease": "7z a .release/release.zip release -mx9",
-    "compileAll": "npm run compileBin && npm run compileRelease"
+    "compileAll": "npm run compileBin && npm run compileRelease",
+    "update": "cd release && npm run update"
   },
-  "keywords": [],
+  "keywords": [
+    "100",
+    "Kill",
+    "Challenge",
+    "CSGO",
+    "Discord",
+    "bot",
+    "tracking",
+    "Optical",
+    "Character",
+    "Recognition",
+    "OCR"
+  ],
   "author": "B1ANK3",
   "license": "ISC",
   "dependencies": {

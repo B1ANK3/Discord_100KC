@@ -1,4 +1,6 @@
-import { AxiosResponse } from "axios";
+/* VERSION: 1.0.1 */
+
+import { AxiosError, AxiosResponse } from "axios";
 import { Client, EmbedField, Message, MessageAttachment } from "discord.js";
 
 const dc = require('discord.js')
@@ -6,8 +8,14 @@ const tess = require('tesseract.js')
 const fs = require('fs')
 const sharp = require('sharp')
 const axios = require('axios')
+const readline = require('readline');
 const minimist = require('minimist')(process.argv.slice(2))
 const IMAGEDIR = './training/'
+const VERSION = 'v1.0.1'
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+})
 
 //-------------------- GLOBAL VAR --------------------------
 var CLIENT: Discord;
@@ -232,7 +240,7 @@ class Discord {
                 title: `Top Player for ${message.guild.name}`,
                 description: `Player to beat: `,
                 fields: [
-                    { name: top.name, value: `Score: ${top.score} | Position: ${top.position} | KPM: ${Math.round((100 / top.seconds) * 100) / 100}` }
+                    { name: top.name, value: `Score: ${top.score} | Position: ${top.position} | KPM: ${Math.round((100 / top.seconds * 60) * 100) / 100}` }
                 ],
                 footer: { text: `Use ${this.prefix}lb / ${this.prefix}ranks to see the top 20 players. ${this.prefix}top to see the best player` }
             }
@@ -266,43 +274,43 @@ class Discord {
         })
     }
     async record(url: string, image: ArrayBuffer, message: Message) {
-        // if (!RECORD_G) return
         // Maybe port to google drive ?
         var id = makeid(15) // make folder id
         var self = this // inside callbacks
-        if (!fs.existsSync(IMAGEDIR)) fs.mkdirSync(IMAGEDIR) // check dir exists
-        fs.mkdir(`${IMAGEDIR}${id}/`, function (err: Error) {
-            if (err) throw new Error(`FILE_CREATION_FAILED: ${err}`)
-            var obj = {
-                date: Date.now(),
-                author: message.author,
-                guild: message.guild,
-                url: url,
-                success: null,
-                out: null,
-                soft: null,
-                imageRaw: image,
-            }
-            self.image(image, `${IMAGEDIR}${id}/`)
-                .then((data: any) => {
-                    if (!data.success) self.track?.update('error', false)
-                    self.track?.update('finished', true, data.out)
-                    obj['success'] = data.success
-                    obj['out'] = data.out
-                    obj['soft'] = data.soft
-                    fs.writeFileSync(`${IMAGEDIR}${id}/results.json`, JSON.stringify(obj, null, 2))
-                })
-                .catch((data: any) => {
-                    self.track?.update('error', false)
-                    obj['success'] = data.success
-                    obj['out'] = data.out
-                    obj['soft'] = data.soft
-                    fs.writeFileSync(`${IMAGEDIR}${id}/results.json`, JSON.stringify(obj, null, 2))
-                })
-        }) // create new dir with id
+        if (RECORD_G) {
+            if (!fs.existsSync(IMAGEDIR)) fs.mkdirSync(IMAGEDIR) // check dir exists 
+            await fs.mkdir(`${IMAGEDIR}${id}/`, function (err: Error) {
+                if (err) throw new Error(`FILE_CREATION_FAILED: ${err}`)
+            }) // create new dir with id
+        } else { if (!fs.existsSync('./temp')) fs.mkdirSync('./temp') }
+        var obj = {
+            date: Date.now(),
+            author: message.author,
+            guild: message.guild,
+            url: url,
+            success: null,
+            out: null,
+            soft: null,
+            imageRaw: image,
+        }
+        self.image(image, `${IMAGEDIR}${id}/`)
+            .then((data: any) => {
+                if (!data.success) self.track?.update('error', false)
+                self.track?.update('finished', true, data.out)
+                obj['success'] = data.success
+                obj['out'] = data.out
+                obj['soft'] = data.soft
+            })
+            .catch((data: any) => {
+                self.track?.update('error', false)
+                obj['success'] = data.success
+                obj['out'] = data.out
+                obj['soft'] = data.soft
+            })
+        if (RECORD_G) fs.writeFileSync(`${IMAGEDIR}${id}/results.json`, JSON.stringify(obj, null, 2))
     }
     async image(data: any, fileID: string): Promise<any> {
-        var self = this
+        var self = this, p: string = (RECORD_G ? `${fileID}/outImage.png` : `./temp/outImage${makeid(16)}.png`)
         var t = await new Tesseract().init()
         var img = await sharp(data)
         return new Promise(function (resolve, reject) {
@@ -322,14 +330,14 @@ class Discord {
                         .flatten()
                         .normalise()
                         .png()
-                        .toFile(`${fileID}/outImage.png`, function (err: Error, info: any) {
+                        .toFile(p, function (err: Error, info: any) {
                             if (err) {
                                 self.track?.update('error', false)
                                 debug(err)
                                 reject(err)
                             }
                             debug(info)
-                            t.imageText(`${fileID}/outImage.png`).then((str: string) => {
+                            t.imageText(p).then((str: string) => {
                                 if (str.includes('Time:')) {
                                     var n = str.slice(str.indexOf('Time:') + 5, str.indexOf('Time:') + 16).trim()
                                     resolve({ out: n, success: true, soft: true })
@@ -380,12 +388,52 @@ class Tesseract {
         if (typeof minimist == "object") {
             if (minimist.hasOwnProperty(p = 'debug')) {
                 DEBUG_G = minimist[p]
+                debug('Debugging Enabled..')
             }
             if (minimist.hasOwnProperty(p = 'record')) {
                 RECORD_G = minimist[p]
+                console.log('Recording Enabled..')
+            }
+            if (minimist.hasOwnProperty('checkUpdate')) {
+                console.log('Checking for updates..')
+                checkUpdate()
             }
         }
+    }
+    function checkUpdate(): void {
+        axios.get('https://api.github.com/repos/B1ANK3/Discord_100KC/releases/latest', { responseType: 'JSON' })
+            .then((res: AxiosResponse) => {
+                if (res.status == 200) {
+                    if (res.data.tag_name != VERSION) {
+                        console.log(`Update Available! Version: ${res.data.tag_name}.\nUpdate using 'npm run update'`)
+                    } else { console.log(`Version is up to date.`) }
+                } else console.log(`Unable to get latest version. Code: ${res.status}`)
+            }).catch((err: AxiosError) => { console.log(`Unable to get latest version. ${err.code || ''}`) })
     }
     BOARD_G = new LeaderBoard()
     CLIENT = new Discord()
 })()
+
+rl.on('line', async (input: string) => {
+    if (input == 'exit') {
+        if (!RECORD_G) {
+            await new Promise((resolve, reject) => {
+                fs.rmdir('./temp', { recursive: true }, (err: Error) => {
+                    if (err) {
+                        reject(err)
+                    }
+                    resolve('')
+                })
+            }).then(() => {
+                debug('Deleted temp folder\nExiting {0}')
+                process.exit(0)
+            }).catch(() => {
+                debug('Error deleting temp folder\nExiting {1}')
+                process.exit(1)
+            })
+        } else if (RECORD_G) {
+            debug('Exiting {0}')
+            process.exit(0)
+        }
+    }
+})
