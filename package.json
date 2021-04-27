@@ -28,7 +28,7 @@
   "author": "B1ANK3",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.21.0",
+    "axios": "^0.21.1",
     "discord.js": "^12.4.1",
     "minimist": "^1.2.5",
     "sharp": "^0.26.3",
